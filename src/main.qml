@@ -16,6 +16,36 @@ ApplicationWindow {
     title: qsTr("PCBView");
     visible: true;
     Material.accent: Material.Purple;
+    property var targets: [];
+
+    QtObject{
+        id: target;
+
+        property string shape: "rectangle";
+        property int xPos: 0;
+        property int yPos: 0;
+        property int width: 900;
+        property int height: 400;
+        property int  lineWidth: 0;
+        property string strokeStyle: "transparent";
+        property string fillStyle: "lightgray";
+    }
+
+    function renderTarget(canvers){
+        for(var i = 0; i < targets.length; i += 8){
+            target.shape = app.targets[i];
+            target.xPos = app.targets[i+1];
+            target.yPos = app.targets[i+2];
+            target.width = app.targets[i+3];
+            target.height = app.targets[i+4];
+            target.lineWidth = app.targets[i+5];
+            target.strokeStyle = app.targets[i+6];
+            target.fillStyle = app.targets[i+7];
+            AddTarget.setProperties(target);
+            AddTarget.drawShape(canvers.context);
+            canvers.requestPaint();
+        }
+    }
 
     Item {
         id: shortcuts;                          // alt+G快捷键开关预览图
@@ -60,6 +90,7 @@ ApplicationWindow {
                     id: rectPCBViewArea;            // PCBView窗口
                     width: 940;
                     height: 440;
+                    clip: true;
 
                     Text{
                         text: qsTr("PCBView");
@@ -68,29 +99,52 @@ ApplicationWindow {
 
                     Canvas{
                         id:canvasPCBView;
-                        width: (parent.width - 40)*scaleFactor;
-                        height: (parent.height - 40)*scaleFactor;
+                        width: parent.width - 40;
+                        height: parent.height - 40;
                         anchors.centerIn: parent;
                         contextType: "2d";
-
-                        property real scaleFactor: 1
+                        visible: true;
+                        scale: 1;
 
                         onPaint: {
-                            context.lineWidth = 1;
-                            context.strokeStyle = "black";
-                            context.fillStyle  = "transparent";
+                            app.renderTarget(canvasPCBView);
+                        }
 
-                            context.beginPath();
-                            context.rect(0,0,width,height);
-                            context.fill();
-                            context.stroke();
-
-                            AddTarget.defaultTarget(context);
+                        Component.onCompleted: {
+                            // 灰色画布
+                            targets[0] = "rectangle";
+                            targets[1] = 0;
+                            targets[2] = 0;
+                            targets[3] = width;
+                            targets[4] = height;
+                            targets[5] = 1;
+                            targets[6] = "transparent";
+                            targets[7] = "#fafafa";
+                            // 默认target
+                            for(var i = 8; i < 160; i+=8){
+                                if(i<80){
+                                    targets[i] = "circle";
+                                    targets[i+7] = "red";
+                                }
+                                else{
+                                    targets[i] = "rectangle";
+                                    targets[i+7] = "blue";
+                                }
+                                targets[i+1] = parseInt(Math.random()*890);
+                                targets[i+2] = parseInt(Math.random()*390);
+                                targets[i+3] = 10;
+                                targets[i+4] = 10;
+                                targets[i+5] = 1;
+                                targets[i+6] = "transparent";
+                            }
                         }
 
                         MouseArea {
                             id: curPos;
                             anchors.fill: parent;
+                            onClicked: {
+                                app.renderTarget(canvasPCBView);
+                            }
                         }
                     }
 
@@ -142,11 +196,9 @@ ApplicationWindow {
 
                     Rectangle{
                         id:rectPreView;                 // 缩略图视图
-                        width: 200;
-                        height: 120;
+                        width: 274;
+                        height: 142;
                         visible: false;                 // 默认不显示缩略图
-                        border.color: "white";          // 缩略图视图边框为白色
-                        border.width: 2;
                         anchors.top: canvasPCBView.top;
                         anchors.right: canvasPCBView.right;
                         Text{
@@ -154,9 +206,19 @@ ApplicationWindow {
                             color: Material.color(Material.Pink);
                         }
                         Canvas{
-                            width: parent.width-20;
-                            height: parent.height-40;
+                            id: canvasPreView;
+                            width: 270;
+                            height: 120;
+                            anchors.left: parent.left;
+                            anchors.leftMargin: 2;
+                            anchors.bottom: parent.bottom;
+                            anchors.bottomMargin: 2;
+                            contextType: "2d";
+                            scale: 0.3;
 
+                            onPaint: {
+                                app.renderTarget(canvasPreView);
+                            }
                         }
                     }
                 }

@@ -1,50 +1,42 @@
 .pragma library
 
+var shape = "";
 var xPos = 0;
 var yPos = 0;
+var width = 0;
+var height = 0;
+var lineWidth = 0;
+var strokeStyle = "";
+var fillStyle = "";
 
-function defaultTarget(target){
-
-    for(var i = 0; i < 20; ++i){
-        randomPosition();
-        if( 0 == i%2 ){
-            drawCircle(target);
-        }
-        else{
-            drawRect(target);
-        }
-    }
+function setProperties(target){
+    this.shape = target.shape;
+    this.xPos = target.xPos;
+    this.yPos = target.yPos;
+    this.width = target.width;
+    this.height = target.height;
+    this.lineWidth = target.lineWidth;
+    this.strokeStyle = target.strokeStyle;
+    this.fillStyle = target.fillStyle;
 }
 
-function setPosition(x,y){
-    xPos = x;
-    yPos = y;
+function drawShape(target){
+    target.lineWidth = lineWidth;
+    target.strokeStyle = strokeStyle;
+    target.fillStyle  = fillStyle;
+    target.beginPath();
+    if( shape === "rectangle" ){
+        target.rect(xPos,yPos,width,height);
+    }
+    else{
+        target.ellipse(xPos,yPos,width,height);
+    }
+    target.fill();
+    target.stroke();
+    //target.closePath();
 }
 
 function randomPosition(){
-    xPos = Math.random()*890;
-    yPos = Math.random()*390;
-}
-
-function drawCircle(circle){
-
-        circle.lineWidth = 1;
-        circle.strokeStyle = "grey";
-        circle.fillStyle  = "lightgreen";
-        circle.beginPath()
-        circle.ellipse(xPos,yPos,10,10);
-        circle.fill();
-        circle.stroke();
-
-}
-
-function drawRect(rect) {
-
-        rect.lineWidth = 1;
-        rect.strokeStyle = "grey";
-        rect.fillStyle  = "lightgreen";
-        rect.beginPath()
-        rect.rect(xPos,yPos,10,10);
-        rect.fill();
-        rect.stroke();
+    xPos = parseInt(Math.random()*890);         // 取整
+    yPos = parseInt(Math.random()*390);
 }
