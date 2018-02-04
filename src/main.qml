@@ -31,20 +31,20 @@ ApplicationWindow {
         property string fillStyle: "lightgray";
     }
 
-    function renderTarget(canvers){
+    function renderTarget(canvers,scale){
         for(var i = 0; i < targets.length; i += 8){
             target.shape = app.targets[i];
-            target.xPos = app.targets[i+1];
-            target.yPos = app.targets[i+2];
-            target.width = app.targets[i+3];
-            target.height = app.targets[i+4];
+            target.xPos = app.targets[i+1]*scale;
+            target.yPos = app.targets[i+2]*scale;
+            target.width = app.targets[i+3]*scale;
+            target.height = app.targets[i+4]*scale;
             target.lineWidth = app.targets[i+5];
             target.strokeStyle = app.targets[i+6];
             target.fillStyle = app.targets[i+7];
             AddTarget.setProperties(target);
             AddTarget.drawShape(canvers.context);
-            canvers.requestPaint();
         }
+        canvers.requestPaint();
     }
 
     Item {
@@ -97,32 +97,31 @@ ApplicationWindow {
                         color: Material.color(Material.Pink);
                     }
 
+                    Rectangle{
+                        id:rectBackground;
+                        width: 900;
+                        height: 400;
+                        anchors.centerIn: parent;
+                        color: "#fafafa";
+                    }
+
                     Canvas{
                         id:canvasPCBView;
-                        width: parent.width - 40;
-                        height: parent.height - 40;
+                        width: 900;
+                        height: 400;
                         anchors.centerIn: parent;
                         contextType: "2d";
-                        visible: true;
                         scale: 1;
+                        signal reRender;
 
                         onPaint: {
-                            app.renderTarget(canvasPCBView);
+                            app.renderTarget(canvasPCBView,scale);
                         }
 
                         Component.onCompleted: {
-                            // 灰色画布
-                            targets[0] = "rectangle";
-                            targets[1] = 0;
-                            targets[2] = 0;
-                            targets[3] = width;
-                            targets[4] = height;
-                            targets[5] = 1;
-                            targets[6] = "transparent";
-                            targets[7] = "#fafafa";
                             // 默认target
-                            for(var i = 8; i < 160; i+=8){
-                                if(i<80){
+                            for(var i = 0; i < 1600; i+=8){
+                                if(i<800){
                                     targets[i] = "circle";
                                     targets[i+7] = "red";
                                 }
@@ -137,13 +136,25 @@ ApplicationWindow {
                                 targets[i+5] = 1;
                                 targets[i+6] = "transparent";
                             }
+//                            reRender.connect(rePreview);
                         }
 
                         MouseArea {
                             id: curPos;
                             anchors.fill: parent;
                             onClicked: {
-                                app.renderTarget(canvasPCBView);
+                                var i = targets.length;
+                                targets[i] = "rectangle";
+                                targets[i+1] = mouseX;
+                                targets[i+2] = mouseY;
+                                targets[i+3] = 10;
+                                targets[i+4] = 10;
+                                targets[i+5] = 1;
+                                targets[i+6] = "transparent";
+                                targets[i+7] = "green";
+
+                                app.renderTarget(canvasPCBView,1);
+                                app.renderTarget(canvasPreView,0.3);
                             }
                         }
                     }
@@ -179,15 +190,14 @@ ApplicationWindow {
                             property bool isDown : false;
 
                             onStopped: {
+                                rectPreView.visible = !rectPreView.visible;
                                 if (isDown === true){
-                                    rotationAnimation.from = 0;
-                                    rotationAnimation.to = -90;
-                                    rectPreView.visible = false;
+                                    from = 0;
+                                    to = -90;
                                 }
                                 else{
-                                    rotationAnimation.from = -90;
-                                    rotationAnimation.to = 0;
-                                    rectPreView.visible = true;
+                                    from = -90;
+                                    to = 0;
                                 }
                                 isDown = !isDown;
                             }
@@ -205,19 +215,23 @@ ApplicationWindow {
                             text: qsTr("PreView");
                             color: Material.color(Material.Pink);
                         }
-                        Canvas{
-                            id: canvasPreView;
+                        Rectangle{
+                            id: rectPreViewBg;
                             width: 270;
                             height: 120;
                             anchors.left: parent.left;
                             anchors.leftMargin: 2;
                             anchors.bottom: parent.bottom;
                             anchors.bottomMargin: 2;
-                            contextType: "2d";
-                            scale: 0.3;
+                            color: "#fafafa";
+                            Canvas{
+                                id: canvasPreView;
+                                anchors.fill:parent;
+                                contextType: "2d";
 
-                            onPaint: {
-                                app.renderTarget(canvasPreView);
+                                onPaint: {
+                                    app.renderTarget(canvasPreView,0.3)
+                                }
                             }
                         }
                     }
