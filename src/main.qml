@@ -55,12 +55,13 @@ ApplicationWindow {
         }
     }
 
-    function renderTargets(canvers,scale){
+    function renderTargets(canvas,scale){
+        canvas.context.clearRect(0,0,canvas.width,canvas.height);
         for(var i = 0; i < targets.length; ++i){
             AddTarget.setProperties(targets[i]);
-            AddTarget.drawShape(canvers.context,scale);
+            AddTarget.drawShape(canvas.context,scale);
         }
-        canvers.requestPaint();
+        canvas.requestPaint();
     }
 
     Item {
@@ -138,7 +139,7 @@ ApplicationWindow {
                         property real yOffset: 0;
 
 
-                        property bool  isSelect: false;
+                        property bool  isSelected: false;
                         property int  targetPosX: 0;
                         property int  targetPosY: 0;
                         property int  targetWidth: 0;
@@ -158,7 +159,7 @@ ApplicationWindow {
                             // 默认target
                             var cnt = 2;
                             for(var i = 0; i < cnt; ++i){
-                                canvasPCBView.isSelect = false;
+                                canvasPCBView.isSelected = false;
                                 // paresInt():取整,Math.random():0-1之间的随机数
                                 canvasPCBView.targetPosX = parseInt(Math.random()*890);
                                 canvasPCBView.targetPosY = parseInt(Math.random()*390);
@@ -175,7 +176,7 @@ ApplicationWindow {
                                     canvasPCBView.targetShape = "rectangle";
                                 }
 
-                                app.addTarget( isSelect,
+                                app.addTarget( isSelected,
                                                targetPosX,
                                                targetPosY,
                                                targetWidth,
@@ -187,49 +188,39 @@ ApplicationWindow {
                             }
                         }
 
+                        function moveTargets(canvas,offsetX,offsetY){
+                            canvas.context.clearRect(0,0,canvas.width,canvas.height);
+                            canvas.context.translate(offsetX,offsetY);
+                        }
+
                         MouseArea {
                             id: curPos;
                             anchors.fill: parent;
-                            property var startPos: Qt.point(0,0);
-                            property var endPos: Qt.point(0,0);
-                            property var offSetPos: Qt.point(0,0);
+                            property point startPoint: Qt.point(0,0);
+                            property point endPoint: Qt.point(0,0);
+                            property point offSetPoint: Qt.point(0,0);
 
-                            onEntered:{
-                                // 记录鼠标按压时的坐标
-                                curPos.startPos.x = mouseX;
-                                curPos.startPos.y = mouseY;
+                            onPressed: {
+                                curPos.startPoint = Qt.point(mouseX,mouseY);
                             }
-                            onReleased: {
-                                // 记录鼠标松开时的坐标
-                                curPos.endPos.x = mouseX;
-                                curPos.endPos.y = mouseY;
 
-                                // 计算画布的偏移
-                                curPos.offSetPos.x = endPos.x - startPos.x;
-                                curPos.offSetPos.y = endPos.y - startPos.y;
+                            onPositionChanged: {
+                                curPos.endPoint = Qt.point(mouseX,mouseY);
+                                canvasPCBView.moveTargets(canvasPCBView,
+                                       curPos.endPoint.x - curPos.startPoint.x,
+                                       curPos.endPoint.y - curPos.startPoint.y);
+                                app.renderTargets( canvasPCBView,canvasPCBView.scale);
+                                curPos.offSetPoint = Qt.point(curPos.offSetPoint.x + curPos.endPoint.x - curPos.startPoint.x,
+                                                              curPos.offSetPoint.y + curPos.endPoint.y - curPos.startPoint.y);
+                                curPos.startPoint = Qt.point(mouseX,mouseY);
                             }
-                            onClicked: {
 
-                                canvasPCBView.fillColor = "green";
-                                canvasPCBView.targetPosX = mouseX;
-                                canvasPCBView.targetPosY = mouseY;
-
-                                app.addTarget( canvasPCBView.isSelect,
-                                               canvasPCBView.targetPosX,
-                                               canvasPCBView.targetPosY,
-                                               canvasPCBView.targetWidth,
-                                               canvasPCBView.targetHeight,
-                                               canvasPCBView.borderWidth,
-                                               canvasPCBView.borderColor,
-                                               canvasPCBView.fillColor,
-                                               canvasPCBView.targetShape );
-
-                                app.renderTargets( canvasPCBView,
-                                                   canvasPCBView.scale);
-                                app.renderTargets( canvasPreView,
-                                                   canvasPreView.preViewScale);
-                                canvasPCBView.x += curPos.offSetPos.x;
-                                canvasPCBView.y += curPos.offSetPos.y;
+                            onDoubleClicked: {
+                                canvasPCBView.context.clearRect(0,0,canvasPCBView.width, canvasPCBView.height);
+                                canvasPCBView.context.translate(-curPos.offSetPoint.x,
+                                                                -curPos.offSetPoint.y);
+                                curPos.offSetPoint = Qt.point(0,0);
+                                app.renderTargets( canvasPCBView,canvasPCBView.scale);
                             }
                         }
                     }
