@@ -4,6 +4,5 @@
         <file>images/arrow.png</file>
         <file>scripts/AddTarget.js</file>
         <file>Component/Target.qml</file>
-        <file>Component/FloatingWin.qml</file>
     </qresource>
 </RCC>
