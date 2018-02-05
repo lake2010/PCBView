@@ -20,6 +20,11 @@ ApplicationWindow {
     property Component component: null;
     property var targets: [];
 
+    //g
+    function check(posX,posY){
+        return true;
+    }
+
     function addTarget( isSelected,
                        targetPosX,
                        targetPosY,
@@ -44,8 +49,9 @@ ApplicationWindow {
                             "borderColor":borderColor,
                             "fillCorlor":fillCorlor,
                             "targetShape":targetShape })
+            canvasPCBView.requestPaint();　//重新渲染
+            app.targets[app.targets.length] = curTarget;
         }
-        app.targets[app.targets.length] = curTarget;
     }
 
     function deleteTarget(pos){
@@ -101,7 +107,12 @@ ApplicationWindow {
         currentIndex: tabBar.currentIndex;      // 当前窗口索引与tab对应
 
         Page{
-            Keys.forwardTo: [shortcuts]
+            id: mainWinPage;
+            Keys.forwardTo: [shortcuts];
+
+            property var floatWinComponent: null;
+            property var floatWin;
+
             GridLayout{
                 columns: 2;
                 anchors.fill: parent;
@@ -111,6 +122,8 @@ ApplicationWindow {
                     id: rectPCBViewArea;            // PCBView窗口
                     width: 940;
                     height: 440;
+
+                    state: "null";
 
                     Text{
                         text: qsTr("PCBView");
@@ -134,6 +147,10 @@ ApplicationWindow {
                             contextType: "2d";
                             clip: true;
                             scale: 1;
+
+                            property bool isFst: true; //判断是否第一次渲染画布，执行不同操作
+                            property real xOffset: 0; //画图的起始x坐标
+                            property real yOffset: 0; //画图的起始y坐标
 
                             property bool  isSelected: false;
                             property int  targetPosX: 0;
@@ -239,6 +256,69 @@ ApplicationWindow {
                                     canvasPCBView.y = offSetPoint.y;
                                     canvasPCBView.scale = 1;
                                     app.renderTargets( canvasPCBView);
+                                }
+                            }
+
+                            Menu { // 右键菜单
+                                id: contentMenu;
+                                x: mouseRegion.mouseX;
+                                y: mouseRegion.mouseY;
+
+                                MenuItem {
+                                    id: menuItem;
+                                    text: "add";
+                                    onTriggered: {
+                                        if(null === mainWinPage.floatWinComponent){
+                                            mainWinPage.floatWin = Qt.createComponent("qrc:/Component/FloatingWin.qml");
+                                            mainWinPage.floatWinComponent = mainWinPage.floatWin.createObject(mainWinPage,{"x":300,"y":150});
+                                        }
+                                    }
+                                }
+
+                                MenuItem {
+                                    text: "continue1";
+                                    onTriggered: { console.log("continue1 is selected"); }
+                                }
+
+                                MenuItem {
+                                    text: "continue2";
+                                    onTriggered: { console.log("continue2 is selected"); }
+                                }
+                            }
+
+                            MouseArea {
+                                id: mouseRegion;
+                                anchors.fill: parent;
+                                acceptedButtons: Qt.RightButton; // 激活右键
+
+                                onClicked: {
+                                    if (mouse.button === Qt.RightButton) { // 右键菜单
+                                        contentMenu.open();
+                                    }
+                                }
+                            }
+
+                            MouseArea{ //鼠标点击canvasPCBView区域添加一个target
+                                anchors.fill: parent;
+                                onClicked:  {
+                                    if(check(mouseX,mouseY) && null != mainWinPage.floatWinComponent ){ //判断鼠标点击的区域是否存在已有target
+                                        if(mainWinPage.floatWinComponent.checkedShape === "rectangle"){ //要添加的target是矩形
+                                            app.addTarget(false,
+                                                          mouseX,mouseY,
+                                                          10,10,
+                                                          1,
+                                                          "blue","lightblue",
+                                                          "rectangle")
+                                        }
+                                        else if(mainWinPage.floatWinComponent.checkedShape === "circle"){　//要添加的target是圆形
+                                            app.addTarget(false,
+                                                          mouseX,mouseY,
+                                                          10,10,
+                                                          1,
+                                                          "red","pink",
+                                                          "circle")
+                                        }
+                                    }
                                 }
                             }
                         }
