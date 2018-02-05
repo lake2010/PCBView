@@ -10,39 +10,55 @@ ApplicationWindow {
     width: 1280;
     height: 720;
     minimumWidth: 1280;
-    minimumHeight: 720;
+    minimumHeight: 70;
     maximumWidth: 1280;
     maximumHeight: 720;
     title: qsTr("PCBView");
     visible: true;
     Material.accent: Material.Purple;
+
+    property Component component: null;
     property var targets: [];
 
-    QtObject{
-        id: target;
-
-        property string shape: "rectangle";
-        property int xPos: 0;
-        property int yPos: 0;
-        property int width: 900;
-        property int height: 400;
-        property int  lineWidth: 0;
-        property string strokeStyle: "transparent";
-        property string fillStyle: "lightgray";
+    function addTarget( isSelect,
+                        targetPosX,
+                        targetPosY,
+                        targetWidth,
+                        targetHeight,
+                        borderWidth,
+                        borderColor,
+                        fillCorlor,
+                       targetShape ){
+        if(app.component == null){
+            app.component = Qt.createComponent("./Component/Target.qml");
+        }
+        var curTarget;
+        if(app.component.status == Component.Ready){
+            curTarget = app.component.createObject(
+                        app,{ "isSelect":isSelect,
+                              "targetPosX":targetPosX,
+                              "targetPosY":targetPosY,
+                              "targetWidth":targetWidth,
+                              "targetHeight":targetHeight,
+                              "borderWidth":borderWidth,
+                              "borderColor":borderColor,
+                              "fillCorlor":fillCorlor,
+                              "targetShape":targetShape })
+        }
+        app.targets[app.targets.length] = curTarget;
     }
 
-    function renderTarget(canvers,scale){
-        for(var i = 0; i < targets.length; i += 8){
-            target.shape = app.targets[i];
-            target.xPos = app.targets[i+1]*scale;
-            target.yPos = app.targets[i+2]*scale;
-            target.width = app.targets[i+3]*scale;
-            target.height = app.targets[i+4]*scale;
-            target.lineWidth = app.targets[i+5];
-            target.strokeStyle = app.targets[i+6];
-            target.fillStyle = app.targets[i+7];
-            AddTarget.setProperties(target);
-            AddTarget.drawShape(canvers.context);
+    function deleteTarget(pos){
+        if(app.targets.length>0){
+            var curTarget = app.targets.splice(pos,1);
+            curTarget[0].destroy();
+        }
+    }
+
+    function renderTargets(canvers,scale){
+        for(var i = 0; i < targets.length; ++i){
+            AddTarget.setProperties(targets[i]);
+            AddTarget.drawShape(canvers.context,scale);
         }
         canvers.requestPaint();
     }
@@ -57,10 +73,9 @@ ApplicationWindow {
         }
     }
 
-    header: TabBar{
+    TabBar{
         id: tabBar;                             // TabBar,包含MainWindow和Setting
         width: parent.width;
-        currentIndex: swipeView.currentIndex;   // 当前tab的索引与窗口对应
         Material.foreground: Material.Pink;
 
         TabButton{
@@ -74,9 +89,13 @@ ApplicationWindow {
         }
     }
 
-    SwipeView {
-        id: swipeView;
-        anchors.fill: parent;
+    StackLayout {
+        width: parent.width;
+        height: parent.height;
+        anchors.top: tabBar.bottom;
+        anchors.bottom: parent.bottom;
+        anchors.bottomMargin: 2;
+
         currentIndex: tabBar.currentIndex;      // 当前窗口索引与tab对应
 
         Page{
@@ -90,7 +109,6 @@ ApplicationWindow {
                     id: rectPCBViewArea;            // PCBView窗口
                     width: 940;
                     height: 440;
-                    clip: true;
 
                     Text{
                         text: qsTr("PCBView");
@@ -103,58 +121,115 @@ ApplicationWindow {
                         height: 400;
                         anchors.centerIn: parent;
                         color: "#fafafa";
+                        clip: true;
                     }
 
                     Canvas{
                         id:canvasPCBView;
+                        x:0;y:0;
                         width: 900;
                         height: 400;
-                        anchors.centerIn: parent;
+                        anchors.fill: rectBackground;
                         contextType: "2d";
+                        clip: true;
                         scale: 1;
-                        signal reRender;
+
+                        property real xOffset: 0;
+                        property real yOffset: 0;
+
+
+                        property bool  isSelect: false;
+                        property int  targetPosX: 0;
+                        property int  targetPosY: 0;
+                        property int  targetWidth: 0;
+                        property int  targetHeight: 0;
+                        property int  borderWidth: 0;
+                        property string  borderColor: "transparent";
+                        property string  fillColor: "lightgrey";
+                        property string targetShape: "rectangle";
+
 
                         onPaint: {
-                            app.renderTarget(canvasPCBView,scale);
+                            app.renderTargets( canvasPCBView,
+                                               canvasPCBView.scale );
                         }
 
                         Component.onCompleted: {
                             // 默认target
-                            for(var i = 0; i < 1600; i+=8){
-                                if(i<800){
-                                    targets[i] = "circle";
-                                    targets[i+7] = "red";
+                            var cnt = 2;
+                            for(var i = 0; i < cnt; ++i){
+                                canvasPCBView.isSelect = false;
+                                // paresInt():取整,Math.random():0-1之间的随机数
+                                canvasPCBView.targetPosX = parseInt(Math.random()*890);
+                                canvasPCBView.targetPosY = parseInt(Math.random()*390);
+                                canvasPCBView.targetWidth = 10;
+                                canvasPCBView.targetHeight = 10;
+                                canvasPCBView.borderWidth = 1;
+                                canvasPCBView.borderColor = "transparent";
+                                if(i%2==0){
+                                    canvasPCBView.fillColor = "red";
+                                    canvasPCBView.targetShape = "circle";
                                 }
                                 else{
-                                    targets[i] = "rectangle";
-                                    targets[i+7] = "blue";
+                                    canvasPCBView.fillColor = "blue";
+                                    canvasPCBView.targetShape = "rectangle";
                                 }
-                                targets[i+1] = parseInt(Math.random()*890);
-                                targets[i+2] = parseInt(Math.random()*390);
-                                targets[i+3] = 10;
-                                targets[i+4] = 10;
-                                targets[i+5] = 1;
-                                targets[i+6] = "transparent";
+
+                                app.addTarget( isSelect,
+                                               targetPosX,
+                                               targetPosY,
+                                               targetWidth,
+                                               targetHeight,
+                                               borderWidth,
+                                               borderColor,
+                                               fillColor,
+                                               targetShape );
                             }
-//                            reRender.connect(rePreview);
                         }
 
                         MouseArea {
                             id: curPos;
                             anchors.fill: parent;
-                            onClicked: {
-                                var i = targets.length;
-                                targets[i] = "rectangle";
-                                targets[i+1] = mouseX;
-                                targets[i+2] = mouseY;
-                                targets[i+3] = 10;
-                                targets[i+4] = 10;
-                                targets[i+5] = 1;
-                                targets[i+6] = "transparent";
-                                targets[i+7] = "green";
+                            property var startPos: Qt.point(0,0);
+                            property var endPos: Qt.point(0,0);
+                            property var offSetPos: Qt.point(0,0);
 
-                                app.renderTarget(canvasPCBView,1);
-                                app.renderTarget(canvasPreView,0.3);
+                            onEntered:{
+                                // 记录鼠标按压时的坐标
+                                curPos.startPos.x = mouseX;
+                                curPos.startPos.y = mouseY;
+                            }
+                            onReleased: {
+                                // 记录鼠标松开时的坐标
+                                curPos.endPos.x = mouseX;
+                                curPos.endPos.y = mouseY;
+
+                                // 计算画布的偏移
+                                curPos.offSetPos.x = endPos.x - startPos.x;
+                                curPos.offSetPos.y = endPos.y - startPos.y;
+                            }
+                            onClicked: {
+
+                                canvasPCBView.fillColor = "green";
+                                canvasPCBView.targetPosX = mouseX;
+                                canvasPCBView.targetPosY = mouseY;
+
+                                app.addTarget( canvasPCBView.isSelect,
+                                               canvasPCBView.targetPosX,
+                                               canvasPCBView.targetPosY,
+                                               canvasPCBView.targetWidth,
+                                               canvasPCBView.targetHeight,
+                                               canvasPCBView.borderWidth,
+                                               canvasPCBView.borderColor,
+                                               canvasPCBView.fillColor,
+                                               canvasPCBView.targetShape );
+
+                                app.renderTargets( canvasPCBView,
+                                                   canvasPCBView.scale);
+                                app.renderTargets( canvasPreView,
+                                                   canvasPreView.preViewScale);
+                                canvasPCBView.x += curPos.offSetPos.x;
+                                canvasPCBView.y += curPos.offSetPos.y;
                             }
                         }
                     }
@@ -224,14 +299,17 @@ ApplicationWindow {
                             anchors.bottom: parent.bottom;
                             anchors.bottomMargin: 2;
                             color: "#fafafa";
-                            Canvas{
-                                id: canvasPreView;
-                                anchors.fill:parent;
-                                contextType: "2d";
+                        }
+                        Canvas{
+                            id: canvasPreView;
+                            anchors.fill:rectPreViewBg;
+                            contextType: "2d";
 
-                                onPaint: {
-                                    app.renderTarget(canvasPreView,0.3)
-                                }
+                            property real preViewScale: 0.3;
+
+                            onPaint: {
+                                app.renderTargets( canvasPreView,
+                                                   canvasPreView.preViewScale)
                             }
                         }
                     }
