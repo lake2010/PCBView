@@ -13,3 +13,4 @@ QtObject{
     property string fillCorlor: "lightgray";
     property bool isSelect: false;
 }
+
