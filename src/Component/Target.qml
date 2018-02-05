@@ -3,7 +3,7 @@ import QtQuick 2.9
 QtObject{
     id: target;
 
-    property string targetShape: "rectangle";
+    property bool isSelected: false;
     property int targetPosX: 0;
     property int targetPosY: 0;
     property int targetWidth: 900;
@@ -11,6 +11,6 @@ QtObject{
     property int  borderWidth: 0;
     property string borderColor: "transparent";
     property string fillCorlor: "lightgray";
-    property bool isSelect: false;
+    property string targetShape: "rectangle";
 }
 
