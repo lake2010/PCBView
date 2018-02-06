@@ -271,7 +271,34 @@ ApplicationWindow {
                                     }
                                 }
 
-                                // 鼠标点击事件
+                                onReleased: {
+                                    if(startPoint === Qt.point(mouseX,mouseY)){ //判断鼠标按下期间是否发生过移动
+                                        if( null != mainWinPage.floatWinComponent &&
+                                                canvasPCBView.selectedObjIdx === -1){
+                                            //判断鼠标点击的区域是否存在已有target
+                                            if(mainWinPage.floatWinComponent.checkedShape === "rectangle"){
+                                                //要添加的target是矩形
+                                                app.addTarget(false,
+                                                              mouseX,mouseY,
+                                                              10,10,
+                                                              1,
+                                                              "blue","lightblue",
+                                                              "rectangle")
+                                            }
+                                            else if(mainWinPage.floatWinComponent.checkedShape === "circle"){
+                                                //要添加的target是圆形
+                                                app.addTarget(false,
+                                                              mouseX,mouseY,
+                                                              10,10,
+                                                              1,
+                                                              "red","pink",
+                                                              "circle")
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 鼠标按下事件
                                 onPressed: {
                                     if(mouse.button === Qt.LeftButton){
                                         // 右键:记录鼠标开始点击的位置
@@ -284,29 +311,6 @@ ApplicationWindow {
                                     }
                                     else{
                                         buttonType = "right"
-                                    }
-
-                                    if( null != mainWinPage.floatWinComponent &&
-                                            canvasPCBView.selectedObjIdx === -1){
-                                        //判断鼠标点击的区域是否存在已有target
-                                        if(mainWinPage.floatWinComponent.checkedShape === "rectangle"){
-                                            //要添加的target是矩形
-                                            app.addTarget(false,
-                                                          mouseX,mouseY,
-                                                          10,10,
-                                                          1,
-                                                          "blue","lightblue",
-                                                          "rectangle")
-                                        }
-                                        else if(mainWinPage.floatWinComponent.checkedShape === "circle"){
-                                            //要添加的target是圆形
-                                            app.addTarget(false,
-                                                          mouseX,mouseY,
-                                                          10,10,
-                                                          1,
-                                                          "red","pink",
-                                                          "circle")
-                                        }
                                     }
                                 }
 
@@ -361,7 +365,7 @@ ApplicationWindow {
                                         }
                                     }
                                 }
-                            }
+                            }//end of MouseArea
 
                             Menu { // 右键菜单
                                 id: contentMenu;
@@ -389,8 +393,8 @@ ApplicationWindow {
                                     onTriggered: { console.log("continue2 is selected"); }
                                 }
                             }
-                        }
-                    }
+                        }// end of Canvas(id:canvasPCBView)
+                    }// end of Rectangle(id:rectBackground)
 
                     Image{
                         id: imgTriangle;            // 提示缩略图显示与关闭的图案
@@ -435,7 +439,7 @@ ApplicationWindow {
                                 isDown = !isDown;
                             }
                         }
-                    }
+                    }// end of Image(id:imgTriangle)
 
                     Rectangle{
                         id:rectPreView;                 // 缩略图视图
@@ -496,9 +500,9 @@ ApplicationWindow {
                                     }
                                 }
                             }
-                        }
-                    }
-                }
+                        }// end of Canvas(id:canvasPreView)
+                    }// end of Rectangle(id:rectPreView)
+                }// end of Item(id:pcbViewArea)
 
                 Item{
                     id: listArea;                               // List窗口
@@ -556,8 +560,8 @@ ApplicationWindow {
                         color: Material.color(Material.Pink);
                     }
                 }
-            }
-        }
+            }// end of GridLayout
+        }// end of Page(id: mainWinPage)
 
         Page{
             Item{
@@ -570,6 +574,6 @@ ApplicationWindow {
                 }
             }
         }
-    }
-}
+    }// end of StackLayout
+}// end of ApplicationWindow
 

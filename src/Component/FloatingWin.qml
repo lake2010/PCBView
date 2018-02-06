@@ -9,11 +9,18 @@ Pane {
     Material.elevation: 10;
     Material.background: floatRectColor;
 
+    property color checkedColor: "#BCAAA4";
+    property color defaultColor: "#B0BEC5";
+    property color floatRectColor: "#AA455A64";
+
+    property string checkedShape: "null";
+
     //>>>---------------------------------------------------------------------------
     // 悬浮框拖动功能
     MouseArea {
         id: dragRegion;
         anchors.fill: parent;
+        property point clickPos: "0,0"; //鼠标被按下时的坐标
 
         onPressed: {    //当鼠标按下时，记录该位置并取消选中的添加原件类型
             clickPos  = Qt.point(mouse.x,mouse.y);
@@ -29,7 +36,6 @@ Pane {
             floatingRectArea.y += delta.y;
         }
 
-        property point clickPos: "0,0"; //鼠标被按下时的坐标
     }// end of MouseArea (ID:dragRegion)
 
 
@@ -129,11 +135,5 @@ Pane {
             checkedShape = "null";
         }
     }
-
-    property color checkedColor: "#BCAAA4";
-    property color defaultColor: "#B0BEC5";
-    property color floatRectColor: "#AA455A64";
-
-    property string checkedShape: "null";
 }// end of Rectangle(ID:floatingRect)
 
